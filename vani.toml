@@ -1,0 +1,13 @@
+[package]
+name        = "chacha20_poly1305"
+version     = "0.1.0"
+entry       = "src/lib.vani"
+authors     = "enthusiasticgeek"
+license     = "Apache-2.0"
+description = "ChaCha20 (RFC 8439), Poly1305, and the ChaCha20-Poly1305 AEAD construction, pure vani, hardware-agnostic and heap-free -- fixed-size array parameters, no allocator, no extern \"C\" dependency, one-shot (512-byte cap) and unbounded-length streaming APIs. Extracted from DhruvaOS's Pi 1 kernel (the only crypto primitive in the roadmap with no Pi 4/5-side counterpart to extract from)."
+registry    = "kosh"
+
+[deps]
+# No external deps -- built entirely on vani builtins (wrapping_add/
+# wrapping_sub, fixed [T; N] arrays, u8/u32/u64 arithmetic), same as
+# crypto_hash's own (no SHA dependency here, unlike curve25519).

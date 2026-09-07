@@ -1,0 +1,16 @@
+// Host-runnable validation for chacha20_poly1305. Run with:
+//   vanic run test/host_test.vani
+//   vanic run test/host_test.vani --backend=c
+//
+// A real `fn main()` here runs the strict whole-program checker over
+// the whole library, not just a syntax check.
+
+use "../src/lib.vani";
+
+fn main() -> i64 {
+  assert chacha20_self_test() == 1;
+  assert poly1305_self_test() == 1;
+  assert chacha20_poly1305_self_test() == 1;
+  print "chacha20_poly1305: ChaCha20 + Poly1305 + AEAD self-tests PASS";
+  return 0;
+}
