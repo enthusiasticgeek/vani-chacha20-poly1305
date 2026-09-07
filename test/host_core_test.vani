@@ -1,0 +1,55 @@
+// Host-runnable validation for core.vani alone (no self-tests
+// bundled -- exercise the primitives directly). Run with:
+//   vanic run test/host_core_test.vani
+
+use "../src/core.vani";
+
+fn main() -> i64 {
+  // RFC 8439 section 2.3.2's own worked example.
+  let key: [u8; 32] = [
+    0 as u8, 1 as u8, 2 as u8, 3 as u8, 4 as u8, 5 as u8, 6 as u8, 7 as u8,
+    8 as u8, 9 as u8, 10 as u8, 11 as u8, 12 as u8, 13 as u8, 14 as u8, 15 as u8,
+    16 as u8, 17 as u8, 18 as u8, 19 as u8, 20 as u8, 21 as u8, 22 as u8, 23 as u8,
+    24 as u8, 25 as u8, 26 as u8, 27 as u8, 28 as u8, 29 as u8, 30 as u8, 31 as u8
+  ];
+  let nonce: [u8; 12] = [
+    0 as u8, 0 as u8, 0 as u8, 9 as u8, 0 as u8, 0 as u8, 0 as u8, 0x4a as u8, 0 as u8, 0 as u8, 0 as u8, 0 as u8
+  ];
+  let block_out: [u8; 64] = chacha20_block(ref key, 1 as u32, ref nonce);
+  assert block_out[0] == (16 as u8);
+  assert block_out[63] == (78 as u8);
+
+  // Streaming Poly1305 round trip against RFC 8439 section 2.5.2.
+  let poly_key: [u8; 32] = [
+    133 as u8, 214 as u8, 190 as u8, 120 as u8, 87 as u8, 85 as u8, 109 as u8, 51 as u8,
+    127 as u8, 68 as u8, 82 as u8, 254 as u8, 66 as u8, 213 as u8, 6 as u8, 168 as u8,
+    1 as u8, 3 as u8, 128 as u8, 138 as u8, 251 as u8, 13 as u8, 178 as u8, 253 as u8,
+    74 as u8, 191 as u8, 246 as u8, 175 as u8, 65 as u8, 73 as u8, 245 as u8, 27 as u8
+  ];
+  let expected_tag: [u8; 16] = [
+    168 as u8, 6 as u8, 29 as u8, 193 as u8, 48 as u8, 81 as u8, 54 as u8, 198 as u8,
+    194 as u8, 43 as u8, 139 as u8, 175 as u8, 12 as u8, 1 as u8, 39 as u8, 169 as u8
+  ];
+  let chunk: [u8; 256] = cp_zero256_bytes();
+  chunk[0] = 67 as u8; chunk[1] = 114 as u8; chunk[2] = 121 as u8; chunk[3] = 112 as u8;
+  chunk[4] = 116 as u8; chunk[5] = 111 as u8; chunk[6] = 103 as u8; chunk[7] = 114 as u8;
+  chunk[8] = 97 as u8; chunk[9] = 112 as u8; chunk[10] = 104 as u8; chunk[11] = 105 as u8;
+  chunk[12] = 99 as u8; chunk[13] = 32 as u8; chunk[14] = 70 as u8; chunk[15] = 111 as u8;
+  chunk[16] = 114 as u8; chunk[17] = 117 as u8; chunk[18] = 109 as u8; chunk[19] = 32 as u8;
+  chunk[20] = 82 as u8; chunk[21] = 101 as u8; chunk[22] = 115 as u8; chunk[23] = 101 as u8;
+  chunk[24] = 97 as u8; chunk[25] = 114 as u8; chunk[26] = 99 as u8; chunk[27] = 104 as u8;
+  chunk[28] = 32 as u8; chunk[29] = 71 as u8; chunk[30] = 114 as u8; chunk[31] = 111 as u8;
+  chunk[32] = 117 as u8; chunk[33] = 112 as u8;
+
+  let ctx0: Poly1305Ctx = poly1305_init(ref poly_key);
+  let ctx1: Poly1305Ctx = poly1305_update(ref ctx0, ref chunk, 34);
+  let tag: [u8; 16] = poly1305_finalize(ref ctx1);
+  let i: i64 = 0;
+  while i < 16 {
+    assert tag[i] == expected_tag[i];
+    i = i + 1;
+  }
+
+  print "chacha20_poly1305/core: streaming primitives PASS";
+  return 0;
+}
